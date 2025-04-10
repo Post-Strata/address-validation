@@ -42,6 +42,10 @@ export default defineConfig({
     allowedHosts: [host],
     cors: {
       preflightContinue: true,
+      origin: ['https://poststrata-dev.myshopify.com', 'https://admin.shopify.com', process.env.SHOPIFY_APP_URL || 'http://localhost:3000'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     },
     port: Number(process.env.PORT || 3000),
     hmr: hmrConfig,
