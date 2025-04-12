@@ -30,23 +30,6 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Regular validation flow
-  // Clone the request before reading it multiple times
-  const requestClone = request.clone();
-  try {
-    console.log('Request Body:', await requestClone.text());
-  } catch (error) {
-    console.log('Error reading request body as text');
-  }
-
-  try {
-    console.log('Request JSON:', await request.clone().json());
-  } catch (error) {
-    console.log('Error reading request body as JSON');
-  }
-
-  console.log('Request Headers:', request.headers.get("Content-Type"));
-  console.log('Request Headers:', request.headers.get("Accept"));
-
   try {
     // Authenticate the request using the session token
     await authenticate.public.checkout(request);
