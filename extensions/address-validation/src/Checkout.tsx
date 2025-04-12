@@ -82,7 +82,6 @@ function Extension() {
     const { countryCode, city, zip, address1, address2, provinceCode } = shippingAddress;
     console.log('📋 ADDRESS DATA:', {address1, address2, city, provinceCode, zip, countryCode});
     const token = await sessionToken.get();
-    console.log('sessionToken.get()', token);
 
     const isUSA = countryCode === "US";
 

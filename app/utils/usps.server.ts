@@ -159,8 +159,6 @@ export async function getUSPSToken(clientId: string, clientSecret: string): Prom
       throw new Error(`USPS API authentication failed: ${response.status} ${errorText}`);
     }
 
-    console.log('USPS token response status:', response);
-
     // Parse the JSON response
     const data = await response.json() as USPSTokenResponse;
 
