@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // Handle OPTIONS preflight requests
-export const loader = async ({ request }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Only handle OPTIONS requests in the loader
   if (request.method === "OPTIONS") {
     return new Response(null, {
