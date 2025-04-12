@@ -18,21 +18,19 @@ export default reactExtension("purchase.checkout.delivery-address.render-before"
 
 function Extension() {
   const zipErrorRef = useRef(null);
+
   const translate = useTranslate();
   const instructions = useInstructions();
   const shippingAddress = useShippingAddress();
   const applyShippingAddressChange = useApplyShippingAddressChange();
-  const { sessionToken, shop } = useApi();
+  const { sessionToken } = useApi();
 
   const [addressValid, setAddressValid] = useState(true);
-
   const [errorMessage, setErrorMessage] = useState("");
 
   // Set up intercept
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     console.log('🟢 INTERCEPT EVENT FIRED');
-    console.log({canBlockProgress, addressValid, errorMessage});
-    console.log('Current shipping address:', shippingAddress);
 
     // Only block if we can and address is not validated
     if (canBlockProgress && !addressValid) {
@@ -80,7 +78,7 @@ function Extension() {
   const validateAddress = useCallback(async () => {
     console.log("🔍 VALIDATING ADDRESS");
     const { countryCode, city, zip, address1, address2, provinceCode } = shippingAddress;
-    console.log('📋 ADDRESS DATA:', {address1, address2, city, provinceCode, zip, countryCode});
+
     const token = await sessionToken.get();
 
     const isUSA = countryCode === "US";
@@ -91,23 +89,19 @@ function Extension() {
       return;
     }
 
-    // Check if we already have a ZIP+4 format
-    // Here we rely on Shopify to validate the zipcode
-    const zipRegex = /^\d{5}-\d{4}$/;
-    if (zipRegex.test(zip)) {
-      console.log("✅ ZIP+4 ALREADY VALID:", zip);
-      setAddressValid(true);
-      return;
-    }
+    // Check for either a basic 5-digit ZIP or any ZIP code format with 5 digits before a hyphen
+    const zipFormatRegex = /^(\d{5})(?:-\d{1,4})?$/;
 
-    // Basic 5-digit ZIP validation
-    const basicZipRegex = /^\d{5}$/;
-    if (!basicZipRegex.test(zip)) {
-      console.log("❌ INVALID BASIC ZIP FORMAT:", zip);
-      setErrorMessage("Please enter a valid 5-digit ZIP code");
+    if (!zipFormatRegex.test(zip)) {
+      console.log("❌ INVALID ZIP FORMAT:", zip);
+      setErrorMessage("Please enter a valid ZIP code (5 digits or ZIP+4 format)");
       setAddressValid(false);
       return;
     }
+
+    // Extract the 5-digit ZIP code (regardless of whether it has a hyphen or not)
+    const zipDigits = zip.substring(0, 5);
+    console.log("✅ USING 5-DIGIT ZIP:", zipDigits);
 
     // Ensure we have the minimum required fields for validation
     if (!city || !provinceCode || !address1) {
@@ -125,8 +119,6 @@ function Extension() {
       // TODO: Use environment variable for this
       // const host = process.env.VITE_API_HOST;
       const host = 'https://velocity-new-cabinet-face.trycloudflare.com';
-
-      console.log("🔄 API storefrontUrl:", shop.myshopifyDomain);
       console.log("📡 API HOST:", host);
 
       // Try to validate the user's address
@@ -143,15 +135,13 @@ function Extension() {
             address2,
             city,
             province: provinceCode,
-            zip,
+            zip: zipDigits, // Use the extracted 5-digit ZIP
             country: countryCode,
           }
         }),
       });
 
-      console.log("📊 API RESPONSE STATUS:", response.status);
       const data = await response.json();
-      console.log("📊 API RESPONSE DATA:", data);
 
       if (data.error) {
         console.error("❌ ADDRESS VALIDATION ERROR:", data.error);
@@ -159,15 +149,17 @@ function Extension() {
         setAddressValid(false);
         return;
       }
-      const { valid, address } = data;
-      const { zipCode, zipPlus4 } = address;
-      console.log("📬 VALIDATION RESULT:", { valid, zipCode, zipPlus4 });
 
-      if (valid && zipPlus4) {
-        console.log("✅ VALIDATED ZIP+4:", zipPlus4);
-        const fullZip = `${zipCode}-${zipPlus4}`;
+      // Check if the address is valid and has a ZIP+4 code
+      if (data.valid && data.address && data.address.zipPlus4) {
+        console.log("✅ VALIDATED ZIP+4:", data.address.zipPlus4);
+
+        // Create the full ZIP+4 code
+        const fullZip = `${data.address.zipCode}-${data.address.zipPlus4}`;
         console.log("📬 SUGGESTED FULL ZIP:", fullZip);
-        applyFullZip(fullZip)
+
+        // Apply the full ZIP+4 code
+        applyFullZip(fullZip);
       } else {
         // If we couldn't validate with USPS, still allow checkout
         console.log("⚠️ COULD NOT VALIDATE WITH USPS - ALLOWING CHECKOUT ANYWAY");
@@ -179,7 +171,7 @@ function Extension() {
       console.log("⚠️ ERROR DURING VALIDATION - ALLOWING CHECKOUT ANYWAY");
       setAddressValid(true);
     }
-  },[shippingAddress, sessionToken, shop.myshopifyDomain, applyFullZip]);
+  },[shippingAddress, sessionToken, applyFullZip]);
 
   useEffect(() => {
     console.log("🔄 EFFECT: ADDRESS CHANGED - VALIDATING");
