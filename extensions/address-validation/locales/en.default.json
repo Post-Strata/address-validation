@@ -2,5 +2,10 @@
   "welcome": "Welcome to the {{target}} extension!",
   "iWouldLikeAFreeGiftWithMyOrder": "I would like to receive a free gift with my order",
   "attributeChangesAreNotSupported": "Attribute changes are not supported in this checkout",
-  "customAddressChangesAreNotSupported": "Custom address changes are not supported in this checkout"
+  "customAddressChangesAreNotSupported": "Custom address changes are not supported in this checkout",
+  "addressValidation": "Address Validation",
+  "validZipCodeAvailable": "We found a more specific ZIP+4 code for your address that may improve delivery speed.",
+  "suggestedZipCode": "Suggested ZIP code",
+  "useFullZipCode": "Use the full ZIP+4 code for my address",
+  "invalidZipCode": "Please enter a valid ZIP code"
 }

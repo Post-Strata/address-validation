@@ -3,7 +3,7 @@
 client_id = "0b2c727bfb4b6aacd08660aacce10a16"
 name = "address-validation"
 handle = "address-validation-44"
-application_url = "https://slideshow-rentals-leaves-parking.trycloudflare.com"
+application_url = "https://velocity-new-cabinet-face.trycloudflare.com"
 embedded = true
 
 [build]
@@ -27,10 +27,15 @@ scopes = "write_products,read_shipping"
 
 [auth]
 redirect_urls = [
-  "https://slideshow-rentals-leaves-parking.trycloudflare.com/auth/callback",
-  "https://slideshow-rentals-leaves-parking.trycloudflare.com/auth/shopify/callback",
-  "https://slideshow-rentals-leaves-parking.trycloudflare.com/api/auth/callback"
+  "https://velocity-new-cabinet-face.trycloudflare.com/auth/callback",
+  "https://velocity-new-cabinet-face.trycloudflare.com/auth/shopify/callback",
+  "https://velocity-new-cabinet-face.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
 embedded = false
+
+[app_proxy]
+url = "https://velocity-new-cabinet-face.trycloudflare.com"
+subpath = "address-validation"
+prefix = "apps"
