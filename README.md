@@ -1,6 +1,16 @@
-# Shopify App Template - Remix
-validates address on checkout
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using the [Remix](https://remix.run) framework.
+# Shopify Address Validation App
+
+This Shopify app enhances checkout accuracy by validating and improving shipping addresses using the USPS Address API 3.0. It offers customers the option to use precise ZIP+4 codes for more accurate delivery.
+
+## Features
+
+- 📬 Validates US shipping addresses during checkout
+- 🔍 Integrates with USPS Address API 3.0 to retrieve ZIP+4 codes
+- 🚚 Enhances delivery precision by suggesting complete 9-digit ZIP codes
+- ✅ Prevents checkout with invalid addresses
+- 🛡️ Robust error handling and fallback options
+
+This app is built on the [Shopify App Template - Remix](https://shopify.dev/docs/apps/getting-started) framework.
 
 Rather than cloning this repo, you can use your preferred package manager and the Shopify CLI with [these steps](https://shopify.dev/docs/apps/getting-started/create).
 
@@ -15,6 +25,7 @@ Before you begin, you'll need the following:
 1. **Node.js**: [Download and install](https://nodejs.org/en/download/) it if you haven't already.
 2. **Shopify Partner Account**: [Create an account](https://partners.shopify.com/signup) if you don't have one.
 3. **Test Store**: Set up either a [development store](https://help.shopify.com/en/partners/dashboard/development-stores#create-a-development-store) or a [Shopify Plus sandbox store](https://help.shopify.com/en/partners/dashboard/managing-stores/plus-sandbox-store) for testing your app.
+4. **USPS API Credentials**: You need to sign up for [USPS Address API 3.0](https://www.usps.com/business/web-tools-apis/) access to obtain your USPS_CONSUMER_KEY and USPS_CONSUMER_SECRET.
 
 ### Setup
 
@@ -118,6 +129,26 @@ Here’s a short list of databases providers that provide a free tier to get sta
 | MongoDB    | NoSQL / Document | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-mongodb), [MongoDB Atlas](https://www.mongodb.com/atlas/database)                                                                                                  |
 
 To use one of these, you can use a different [datasource provider](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#datasource) in your `schema.prisma` file, or a different [SessionStorage adapter package](https://github.com/Shopify/shopify-api-js/blob/main/packages/shopify-api/docs/guides/session-storage.md).
+
+### Configuration
+
+After setting up the project, you need to configure the USPS API credentials:
+
+1. Create a `.env` file in the root directory (or use the environment variables in your hosting platform)
+2. Add your USPS API credentials:
+   ```
+   USPS_CONSUMER_KEY=your_usps_api_key
+   USPS_CONSUMER_SECRET=your_usps_consumer_id
+   ```
+
+### Testing the API
+
+To test if your USPS API integration is working:
+
+1. Start your development server: `npm run dev`
+2. Complete a checkout flow in your development store
+3. Check the server logs to see the USPS API requests and responses
+4. Verify that the app correctly validates addresses and suggests ZIP+4 codes
 
 ### Build
 
@@ -357,6 +388,23 @@ This template uses [Remix](https://remix.run). The following Shopify tools are a
 - [Webhooks](https://github.com/Shopify/shopify-app-js/tree/main/packages/shopify-app-remix#authenticating-webhook-requests): Callbacks sent by Shopify when certain events occur
 - [Polaris](https://polaris.shopify.com/): Design system that enables apps to create Shopify-like experiences
 
+## Troubleshooting USPS API Integration
+
+### Authentication Issues
+If you're experiencing authentication issues with the USPS API:
+
+1. **Verify Credentials**: Double-check your USPS_CONSUMER_KEY and USPS_CONSUMER_SECRET are correct.
+2. **Check Logs**: The app includes comprehensive logging for API requests and responses.
+3. **Multiple Authentication Methods**: The app tries multiple authentication methods, so check logs to see which one succeeds.
+4. **API Limits**: Verify you haven't exceeded USPS API rate limits or quotas.
+
+### CORS Issues
+If you're experiencing CORS issues with the checkout extension:
+
+1. **Headers**: The API is configured to allow all necessary headers for cross-origin requests.
+2. **Authentication**: We've removed the problematic 'Authorization' header from client requests.
+3. **Preflight**: The app handles OPTIONS preflight requests correctly.
+
 ## Resources
 
 - [Remix Docs](https://remix.run/docs/en/v1)
@@ -367,3 +415,4 @@ This template uses [Remix](https://remix.run). The following Shopify tools are a
 - [App extensions](https://shopify.dev/docs/apps/app-extensions/list)
 - [Shopify Functions](https://shopify.dev/docs/api/functions)
 - [Getting started with internationalizing your app](https://shopify.dev/docs/apps/best-practices/internationalization/getting-started)
+- [USPS Address API Documentation](https://www.usps.com/business/web-tools-apis/address-information-api.htm)

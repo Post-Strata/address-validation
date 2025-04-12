@@ -1,39 +1,57 @@
-# Checkout UI Extension
+# Address Validation Extension with USPS ZIP+4 Lookup
 
-Checkout UI extensions let app developers build custom functionality that merchants can install at defined targets in the checkout flow. You can learn more about checkout UI extensions in Shopify’s [developer documentation](https://shopify.dev/api/checkout-extensions/checkout).
+This Checkout UI extension validates US shipping addresses and enhances them with USPS ZIP+4 codes to improve delivery accuracy.
 
-## Prerequisites
+## Features
 
-Before you start building your extension, make sure that you’ve created a [development store](https://shopify.dev/docs/apps/tools/development-stores) with the [checkout extensibility developer preview](https://shopify.dev/docs/api/release-notes/developer-previews#previewing-new-features).
+- Validates US addresses during checkout
+- Retrieves the full 9-digit ZIP+4 code from USPS Address API 3.0
+- Allows customers to choose whether to use the enhanced ZIP code
+- Prevents checkout with invalid addresses
+- Falls back gracefully when validation cannot be completed
 
-## Your new Extension
+## Setup
 
-Your new extension contains the following files:
+### Prerequisites
 
-- `README.md`, the file you are reading right now.
-- `shopify.extension.toml`, the configuration file for your extension. This file defines your extension’s name, where it will appear in the checkout, and other metadata.
-- `src/Checkout.tsx`, the source code for your extension.
-- `locales/en.default.json` and `locales/fr.json`, which contain translations used to [localized your extension](https://shopify.dev/docs/apps/checkout/best-practices/localizing-ui-extensions).
+1. Create a [development store](https://shopify.dev/docs/apps/tools/development-stores) with the [checkout extensibility developer preview](https://shopify.dev/docs/api/release-notes/developer-previews#previewing-new-features)
+2. Set up USPS Address API 3.0 credentials by registering at the [USPS Web Tools API Portal](https://www.usps.com/business/web-tools-apis/)
 
-By default, your extension is configured to target the `purchase.checkout.block.render` [extension target](https://shopify.dev/docs/api/checkout-ui-extensions/extension-targets-overview). You will find the target both in your `shopify.extension.toml`, and in the source code of your extension. The default target allows the merchant to configure where in the checkout *they* want your extension to appear. If you are building an extension that is tied to existing UI element in the checkout, such as the cart lines or shipping options, you can change the extension target so that your UI extension will render in the correct location. Check out the list of [all available extension targets](https://shopify.dev/docs/api/checkout-ui-extensions/extension-targets-overview) to get some inspiration for the kinds of content you can provide with checkout UI extensions.
+### Environment Variables
 
-To build your extension, you will need to use APIs provided by Shopify that let you render content, and to read and write data in the checkout. The following resources will help you get started with checkout extensions:
+The extension requires the following environment variables to be set in your app:
 
-- [APIs by extension target](https://shopify.dev/docs/api/checkout-ui-extensions/targets)
-- [All APIs for reading and writing checkout data](https://shopify.dev/docs/api/checkout-ui-extensions/apis)
-- [Available components and their properties](https://shopify.dev/docs/api/checkout-ui-extensions/components)
+```
+USPS_CONSUMER_KEY=your_usps_api_key
+USPS_CONSUMER_SECRET=your_usps_consumer_id
+```
+
+## Implementation Details
+
+This extension uses:
+
+- The `purchase.checkout.delivery-address.render-before` extension target to display validation UI before the address form
+- Shopify's App Proxy to securely call the USPS Address API 3.0 from the backend
+- React hooks for managing validation state and UI interactions
+
+### API Endpoint
+
+The extension communicates with a backend API endpoint at `/api/validateAddress` that:
+
+1. Receives address data from the checkout
+2. Calls the USPS Address API 3.0 with proper authentication
+3. Returns validation results with the ZIP+4 code if available
+
+## Extension Files
+
+- `src/Checkout.tsx`: Main extension code that handles address validation and UI
+- `locales/en.default.json`: English translations for UI messages
+- `shopify.extension.toml`: Extension configuration
 
 ## Useful Links
 
-- [Checkout app documentation](https://shopify.dev/apps/checkout)
+- [USPS Address API 3.0 Documentation](https://www.usps.com/business/web-tools-apis/address-information-v3-1b.htm)
 - [Checkout UI extension documentation](https://shopify.dev/api/checkout-extensions)
-  - [Configuration](https://shopify.dev/docs/api/checkout-ui-extensions/configuration)
-  - [Extension Targets](https://shopify.dev/docs/api/checkout-ui-extensions/targets)
-  - [API Reference](https://shopify.dev/docs/api/checkout-ui-extensions/apis)
-  - [UI Components](https://shopify.dev/docs/api/checkout-ui-extensions/components)
 - [Checkout UI extension tutorials](https://shopify.dev/docs/apps/checkout)
-  - [Enable extended delivery instructions](https://shopify.dev/apps/checkout/delivery-instructions)
-  - [Creating a custom banner](https://shopify.dev/apps/checkout/custom-banners)
-  - [Thank you and order status pages](https://shopify.dev/docs/apps/checkout/thank-you-order-status)
   - [Adding field validation](https://shopify.dev/apps/checkout/validation)
   - [Localizing an extension](https://shopify.dev/apps/checkout/localize-ui-extensions)
