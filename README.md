@@ -174,7 +174,33 @@ pnpm run build
 
 ## Hosting
 
-When you're ready to set up your app in production, you can follow [our deployment documentation](https://shopify.dev/docs/apps/deployment/web) to host your app on a cloud provider like [Heroku](https://www.heroku.com/) or [Fly.io](https://fly.io/).
+### Terraform Infrastructure
+
+This project includes Terraform configurations for deploying the app to AWS:
+
+- **EC2 Instance**: Amazon Linux 2023 with Docker and Docker Compose pre-installed
+- **Security Groups**: Configured for HTTP, HTTPS, and SSH access
+- **Route 53 DNS**: A record pointing to the EC2 instance
+
+To deploy using Terraform:
+
+1. Navigate to the terraform/production directory
+2. Configure the required variables in terraform.tfvars or via environment variables:
+   ```
+   aws_region   = "us-east-1"  # Or your preferred region
+   key_name     = "your-key-pair-name"  # For SSH access
+   zone_id      = "your-route53-zone-id"  # Route 53 hosted zone ID
+   ```
+3. Initialize, plan, and apply the Terraform configuration:
+   ```shell
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+### Manual Hosting
+
+When you're ready to set up your app in production without using Terraform, you can follow [our deployment documentation](https://shopify.dev/docs/apps/deployment/web) to host your app on a cloud provider like [Heroku](https://www.heroku.com/) or [Fly.io](https://fly.io/).
 
 When you reach the step for [setting up environment variables](https://shopify.dev/docs/apps/deployment/web#set-env-vars), you also need to set the variable `NODE_ENV=production`.
 

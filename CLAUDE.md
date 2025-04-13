@@ -35,6 +35,17 @@ This project includes a Shopify checkout extension for address validation that:
 2. Integrates with USPS Address API 3.0 to retrieve ZIP+4 codes
 3. Enhances delivery precision by suggesting complete 9-digit ZIP codes
 
+### Infrastructure as Code
+
+The project uses Terraform to provision and manage AWS resources:
+
+- `terraform/production/`: Contains Terraform configurations for production deployment
+  - `main.tf`: Defines AWS resources (EC2, security groups, Route 53)
+  - `variables.tf`: Defines input variables for the Terraform configuration
+  - `backend.tf`: Configures remote state management
+  - `outputs.tf`: Defines outputs from the Terraform configuration
+  - `terraform.tfvars`: Contains values for the variables (gitignored for sensitive data)
+
 ### Environment Variables
 
 The following environment variables are required for the USPS integration:

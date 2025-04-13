@@ -3,7 +3,7 @@
 client_id = "0b2c727bfb4b6aacd08660aacce10a16"
 name = "address-validation"
 handle = "address-validation-44"
-application_url = "https://velocity-new-cabinet-face.trycloudflare.com"
+application_url = "https://zip.shopify.poststrata.com"
 embedded = true
 
 [build]
@@ -27,15 +27,15 @@ scopes = "write_products,read_shipping"
 
 [auth]
 redirect_urls = [
-  "https://velocity-new-cabinet-face.trycloudflare.com/auth/callback",
-  "https://velocity-new-cabinet-face.trycloudflare.com/auth/shopify/callback",
-  "https://velocity-new-cabinet-face.trycloudflare.com/api/auth/callback"
+  "https://zip.shopify.poststrata.com/auth/callback",
+  "https://zip.shopify.poststrata.com/auth/shopify/callback",
+  "https://zip.shopify.poststrata.com/api/auth/callback"
 ]
 
 [pos]
 embedded = false
 
 [app_proxy]
-url = "https://velocity-new-cabinet-face.trycloudflare.com"
+url = "https://zip.shopify.poststrata.com"
 subpath = "address-validation"
 prefix = "apps"

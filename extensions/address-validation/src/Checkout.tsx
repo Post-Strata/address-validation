@@ -116,9 +116,7 @@ function Extension() {
       console.log("🔄 SENDING API REQUEST TO VALIDATE ADDRESS");
       // Use your Remix app's URL directly
       // This must match your app's actual URL in shopify.app.toml
-      // TODO: Use environment variable for this
-      // const host = process.env.VITE_API_HOST;
-      const host = 'https://velocity-new-cabinet-face.trycloudflare.com';
+      const host = 'https://zip.shopify.poststrata.com';
       console.log("📡 API HOST:", host);
 
       // Try to validate the user's address
