@@ -147,10 +147,9 @@ function Extension() {
   // Set up intercept
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
     console.log('🟢 INTERCEPT EVENT FIRED');
-    const isValid = true; //validateAddress();
 
     // Only block if we can and address is not validated
-    if (canBlockProgress && (!addressValid || !isValid)) {
+    if (canBlockProgress && (!addressValid)) {
       console.log('🛑 BLOCKING CHECKOUT: Address validation required');
       return {
         behavior: "block",
