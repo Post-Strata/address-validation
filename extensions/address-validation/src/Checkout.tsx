@@ -8,6 +8,7 @@ import {
   useBuyerJourneyIntercept,
   useApi,
   useApplyShippingAddressChange,
+  useSettings
 } from "@shopify/ui-extensions-react/checkout";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -24,39 +25,12 @@ function Extension() {
   const shippingAddress = useShippingAddress();
   const applyShippingAddressChange = useApplyShippingAddressChange();
   const { sessionToken } = useApi();
+  const { api_host } = useSettings();
+
+  console.log("🔄 API HOST:", api_host);
 
   const [addressValid, setAddressValid] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-
-  // Set up intercept
-  useBuyerJourneyIntercept(({ canBlockProgress }) => {
-    console.log('🟢 INTERCEPT EVENT FIRED');
-
-    // Only block if we can and address is not validated
-    if (canBlockProgress && !addressValid) {
-      console.log('🛑 BLOCKING CHECKOUT: Address validation required');
-      return {
-        behavior: "block",
-        reason: "Address validation required",
-        perform: () => {
-            // Scroll to your component or show validation UI
-            console.log("🛑 PERFORMING BLOCK ACTION: Focusing validation UI");
-        },
-        errors: [{
-          message: errorMessage || 'Please validate your address for a complete ZIP+4 code',
-          target: '$.cart.deliveryGroups[0].deliveryAddress.zip'
-        }]
-      };
-    }
-
-    console.log('✅ ALLOWING CHECKOUT: Address is valid or validation not required');
-    return {
-      behavior: "allow",
-      perform: () => {
-        console.log('✅ PERFORMING ALLOW ACTION: Clearing validation state');
-      }
-    };
-  });
 
   // Function to apply the full ZIP+4 code
   const applyFullZip = useCallback(async (zipCode) => {
@@ -69,7 +43,6 @@ function Extension() {
         }
       });
       console.log("✅ FULL ZIP APPLIED");
-      setAddressValid(true);
     } catch (error) {
       console.error("❌ ERROR APPLYING ZIP+4:", error);
     }
@@ -114,9 +87,8 @@ function Extension() {
 
     try {
       console.log("🔄 SENDING API REQUEST TO VALIDATE ADDRESS");
-      // Use your Remix app's URL directly
-      // This must match your app's actual URL in shopify.app.toml
-      const host = 'https://zip.shopify.poststrata.com';
+      // Use the API host from extension settings
+      const host = api_host || 'https://zip.shopify.poststrata.com';
       console.log("📡 API HOST:", host);
 
       // Try to validate the user's address
@@ -157,7 +129,8 @@ function Extension() {
         console.log("📬 SUGGESTED FULL ZIP:", fullZip);
 
         // Apply the full ZIP+4 code
-        applyFullZip(fullZip);
+        await applyFullZip(fullZip);
+        setAddressValid(true);
       } else {
         // If we couldn't validate with USPS, still allow checkout
         console.log("⚠️ COULD NOT VALIDATE WITH USPS - ALLOWING CHECKOUT ANYWAY");
@@ -169,7 +142,38 @@ function Extension() {
       console.log("⚠️ ERROR DURING VALIDATION - ALLOWING CHECKOUT ANYWAY");
       setAddressValid(true);
     }
-  },[shippingAddress, sessionToken, applyFullZip]);
+  },[shippingAddress, sessionToken, api_host, applyFullZip]);
+
+  // Set up intercept
+  useBuyerJourneyIntercept(({ canBlockProgress }) => {
+    console.log('🟢 INTERCEPT EVENT FIRED');
+    const isValid = true; //validateAddress();
+
+    // Only block if we can and address is not validated
+    if (canBlockProgress && (!addressValid || !isValid)) {
+      console.log('🛑 BLOCKING CHECKOUT: Address validation required');
+      return {
+        behavior: "block",
+        reason: "Address validation required",
+        perform: () => {
+            // Scroll to your component or show validation UI
+            console.log("🛑 PERFORMING BLOCK ACTION: Focusing validation UI");
+        },
+        errors: [{
+          message: errorMessage || 'Please validate your address for a complete ZIP+4 code',
+          target: '$.cart.deliveryGroups[0].deliveryAddress.zip'
+        }]
+      };
+    }
+
+    console.log('✅ ALLOWING CHECKOUT: Address is valid or validation not required');
+    return {
+      behavior: "allow",
+      perform: () => {
+        console.log('✅ PERFORMING ALLOW ACTION: Clearing validation state');
+      }
+    };
+  });
 
   useEffect(() => {
     console.log("🔄 EFFECT: ADDRESS CHANGED - VALIDATING");
