@@ -25,3 +25,38 @@ variable "zone_id" {
   type        = string
   description = "Route 53 hosted zone ID for poststrata.com"
 }
+
+# Database variables
+variable "db_instance_class" {
+  type        = string
+  default     = "db.t3.micro"
+  description = "RDS instance class"
+}
+
+variable "db_allocated_storage" {
+  type        = number
+  default     = 20
+  description = "Allocated storage for RDS instance in GB"
+}
+
+variable "db_name" {
+  type        = string
+  default     = "addressvalidation"
+  description = "Name of the database"
+}
+
+variable "db_username" {
+  type        = string
+  description = "Username for the database"
+}
+
+variable "db_password" {
+  type        = string
+  description = "Password for the database"
+}
+
+variable "db_multi_az" {
+  type        = bool
+  default     = false
+  description = "Whether to enable multi-AZ deployment for RDS"
+}

@@ -179,7 +179,8 @@ pnpm run build
 This project includes Terraform configurations for deploying the app to AWS:
 
 - **EC2 Instance**: Amazon Linux 2023 with Docker and Docker Compose pre-installed
-- **Security Groups**: Configured for HTTP, HTTPS, and SSH access
+- **PostgreSQL RDS**: Managed PostgreSQL database for production
+- **VPC & Security Groups**: Configured for HTTP, HTTPS, SSH, and database access
 - **Route 53 DNS**: A record pointing to the EC2 instance
 
 To deploy using Terraform:
@@ -187,9 +188,13 @@ To deploy using Terraform:
 1. Navigate to the terraform/production directory
 2. Configure the required variables in terraform.tfvars or via environment variables:
    ```
-   aws_region   = "us-east-1"  # Or your preferred region
-   key_name     = "your-key-pair-name"  # For SSH access
-   zone_id      = "your-route53-zone-id"  # Route 53 hosted zone ID
+   aws_region         = "us-east-1"  # Or your preferred region
+   key_name           = "your-key-pair-name"  # For SSH access
+   zone_id            = "your-route53-zone-id"  # Route 53 hosted zone ID
+   db_username        = "dbadmin"  # Database username
+   db_password        = "securepassword"  # Database password
+   db_name            = "addressvalidation"  # Database name
+   db_instance_class  = "db.t3.micro"  # RDS instance type
    ```
 3. Initialize, plan, and apply the Terraform configuration:
    ```shell
@@ -197,6 +202,14 @@ To deploy using Terraform:
    terraform plan
    terraform apply
    ```
+
+After deployment, Terraform will output:
+- The EC2 instance public IP and hostname
+- The RDS database endpoint 
+- The database URL (keep this secret)
+- The application URL
+
+See detailed instructions in [terraform/production/README.md](./terraform/production/README.md)
 
 ### Manual Hosting
 
