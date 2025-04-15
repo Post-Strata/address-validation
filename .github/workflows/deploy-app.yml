@@ -50,11 +50,21 @@ jobs:
           USPS_CONSUMER_KEY: mHfs1vG04FndnBjVepBvC2FbudaOt5wYChkIi0GZJy4IK90W
           USPS_CONSUMER_SECRET: ${{ secrets.USPS_CONSUMER_SECRET }}
         run: |
-          # Create a deployment directory with timestamp
+          # Create a temporary directory for deployment
+          TEMP_DIR=$(mktemp -d)
           DEPLOY_DIR="address-validation-$(date +%Y%m%d%H%M%S)"
-
-          # Create .env file with secrets
-          cat > .env <<EOL
+          
+          # Create a deployment directory
+          mkdir -p $TEMP_DIR/$DEPLOY_DIR
+          
+          # Copy necessary files to the deployment directory (exclude unnecessary directories)
+          # Use -a (archive) without verbose output to reduce log noise and avoid overwhelming GitHub Actions
+          rsync -a --quiet --exclude="node_modules" --exclude=".git" --exclude="terraform" \
+            --exclude=".github" --exclude="**/node_modules" --exclude="**/.git" \
+            . $TEMP_DIR/$DEPLOY_DIR/
+          
+          # Create .env file with secrets directly in the deployment directory
+          cat > $TEMP_DIR/$DEPLOY_DIR/.env <<EOL
           DATABASE_PROVIDER=postgresql
           DATABASE_URL=${DATABASE_URL}
           SHOPIFY_API_KEY=${SHOPIFY_API_KEY}
@@ -65,33 +75,41 @@ jobs:
           USPS_CONSUMER_SECRET=${USPS_CONSUMER_SECRET}
           NODE_ENV=production
           EOL
-
-          # Create deployment package excluding unnecessary files
-          tar -czf deploy.tar.gz \
-            --exclude="node_modules" \
-            --exclude=".git" \
-            --exclude="terraform" \
-            .
-
+          
+          # Create deployment package from the temp directory
+          cd $TEMP_DIR
+          tar -czf deploy.tar.gz $DEPLOY_DIR
+          
+          # Verify the tar file was created successfully
+          if [ ! -f deploy.tar.gz ]; then
+            echo "Error: Failed to create deployment package"
+            exit 1
+          fi
+          
+          # Log the size of the tarball for debugging
+          ls -lh deploy.tar.gz
+          
           # Copy files to server
-          scp -o StrictHostKeyChecking=no deploy.tar.gz $EC2_USERNAME@$EC2_HOST:/tmp/
-          scp -o StrictHostKeyChecking=no .env $EC2_USERNAME@$EC2_HOST:/tmp/.env
+          scp -o StrictHostKeyChecking=no $TEMP_DIR/deploy.tar.gz $EC2_USERNAME@$EC2_HOST:/tmp/
+          
+          # Clean up temp directory
+          cd -
+          rm -rf $TEMP_DIR
 
           # Deploy on the server
           ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST << 'ENDSSH'
             # Create deployment directory
-            DEPLOY_DIR="address-validation-$(date +%Y%m%d%H%M%S)"
-            mkdir -p /home/$USER/$DEPLOY_DIR
+            mkdir -p /home/$USER
 
-            # Extract the deployment package
-            tar -xzf /tmp/deploy.tar.gz -C /home/$USER/$DEPLOY_DIR
+            # Extract the deployment package (now contains a nested directory)
+            tar -xzf /tmp/deploy.tar.gz -C /home/$USER/
 
-            # Copy the .env file
-            cp /tmp/.env /home/$USER/$DEPLOY_DIR/.env
-            rm /tmp/.env
+            # Get the extracted directory name (latest address-validation-* directory)
+            DEPLOY_DIR=$(ls -td /home/$USER/address-validation-* | head -1)
+            echo "Deployment directory: $DEPLOY_DIR"
 
             # Move to the deployment directory
-            cd /home/$USER/$DEPLOY_DIR
+            cd $DEPLOY_DIR
 
             # Install dependencies and build
             npm ci
@@ -101,7 +119,7 @@ jobs:
             npm run setup
 
             # Create or update the symlink to the current deployment
-            ln -sfn /home/$USER/$DEPLOY_DIR /home/$USER/current
+            ln -sfn $DEPLOY_DIR /home/$USER/current
 
             # Set up systemd service if it doesn't exist
             if [ ! -f /etc/systemd/system/address-validation.service ]; then
@@ -134,12 +152,18 @@ jobs:
 
             # Keep only the 3 most recent deployments
             cd /home/$USER
-            ls -dt address-validation-* | tail -n +4 | xargs -r rm -rf
+            ls -dt /home/$USER/address-validation-* | tail -n +4 | xargs -r rm -rf
           ENDSSH
 
       - name: Deploy Shopify Extension
+        env:
+          SHOPIFY_CLI_TTY: "0"
+          SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
+          SHOPIFY_API_SECRET: ${{ secrets.SHOPIFY_API_SECRET }}
+          SHOPIFY_APP_URL: ${{ secrets.SHOPIFY_APP_URL }}
+          SHOPIFY_FLAG_PATH: "--path=extensions/address-validation"
         run: |
-          # Set up Shopify CLI authentication using GitHub secrets
-
-          # Deploy extensions
-          npm run deploy
+          echo "Deploying Shopify Extensions..."
+          
+          # Deploy extensions with non-interactive mode and with specific flags
+          SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --no-release
