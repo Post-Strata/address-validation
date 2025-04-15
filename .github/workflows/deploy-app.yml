@@ -108,13 +108,32 @@ jobs:
             DEPLOY_DIR=$(ls -td /home/$USER/address-validation-* | head -1)
             echo "Deployment directory: $DEPLOY_DIR"
 
+            # Check if Node.js is installed
+            if ! command -v node &> /dev/null; then
+              echo "Node.js not found, installing..."
+              # Install Node.js using NVM
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+              source ~/.nvm/nvm.sh
+              nvm install 18
+              nvm use 18
+              
+              # Verify installation
+              node --version
+              npm --version
+            fi
+            
             # Move to the deployment directory
             cd $DEPLOY_DIR
-
+            
+            # Make sure we're using the right Node.js version
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18 || nvm install 18
+            
             # Install dependencies and build
             npm ci
             npm run build
-
+            
             # Run database migrations
             npm run setup
 
@@ -123,22 +142,27 @@ jobs:
 
             # Set up systemd service if it doesn't exist
             if [ ! -f /etc/systemd/system/address-validation.service ]; then
-              sudo tee /etc/systemd/system/address-validation.service > /dev/null << EOL
-              [Unit]
-              Description=Address Validation Shopify App
-              After=network.target
+              # Create service file with proper paths to Node.js from NVM
+              cat > /tmp/address-validation.service << 'EOLSERVICE'
+[Unit]
+Description=Address Validation Shopify App
+After=network.target
 
-              [Service]
-              Type=simple
-              User=$USER
-              WorkingDirectory=/home/$USER/current
-              ExecStart=/usr/bin/npm run start
-              Restart=always
-              Environment=NODE_ENV=production
+[Service]
+Type=simple
+User=${USER}
+WorkingDirectory=/home/${USER}/current
+ExecStart=/home/${USER}/.nvm/versions/node/v18.18.0/bin/npm run start
+Restart=always
+Environment=NODE_ENV=production
+Environment=PATH=/home/${USER}/.nvm/versions/node/v18.18.0/bin:/usr/local/bin:/usr/bin:/bin
 
-              [Install]
-              WantedBy=multi-user.target
-              EOL
+[Install]
+WantedBy=multi-user.target
+EOLSERVICE
+              
+              # Move the file to systemd directory
+              sudo mv /tmp/address-validation.service /etc/systemd/system/
 
               sudo systemctl daemon-reload
               sudo systemctl enable address-validation
