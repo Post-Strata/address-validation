@@ -24,4 +24,5 @@ database.sqlite
 .shopify.lock
 
 # Terraform files
-.terraform
+**/.terraform/*
+*.tfvars

@@ -1,0 +1,9 @@
+aws_region = "us-east-1"
+key_name = "USER" // RSA Keypair
+zone_id = "Z011065524CFYMXCRVTXD" // poststrata.com Zone ID
+db_username = "admin"
+db_password = "password"
+db_name = "addressvalidation"
+db_instance_class = "db.t3.micro"
+db_allocated_storage = 20
+db_multi_az = false

@@ -35,6 +35,16 @@ This project includes a Shopify checkout extension for address validation that:
 2. Integrates with USPS Address API 3.0 to retrieve ZIP+4 codes
 3. Enhances delivery precision by suggesting complete 9-digit ZIP codes
 
+### Database Architecture
+
+The application uses Prisma ORM with PostgreSQL in production:
+
+1. Uses SQLite for local development and PostgreSQL for production
+2. Database schema is defined in `prisma/schema.prisma`
+3. Database connection is configured via environment variables:
+   - `DATABASE_PROVIDER`: Set to "postgresql" for production
+   - `DATABASE_URL`: Connection string to the PostgreSQL database
+
 ### Infrastructure as Code
 
 The project uses Terraform to provision and manage AWS resources:
@@ -48,8 +58,19 @@ The project uses Terraform to provision and manage AWS resources:
 
 ### Environment Variables
 
-The following environment variables are required for the USPS integration:
+The following environment variables are required:
 
+#### Database Connection
+- `DATABASE_PROVIDER`: Database provider (e.g., "postgresql")
+- `DATABASE_URL`: Database connection string
+
+#### Shopify Integration
+- `SHOPIFY_API_KEY`: Shopify API key
+- `SHOPIFY_API_SECRET`: Shopify API secret
+- `SHOPIFY_APP_URL`: URL of the application
+- `SCOPES`: Comma-separated list of OAuth scopes
+
+#### USPS Integration
 - `USPS_CONSUMER_KEY`: Your USPS API key
 - `USPS_CONSUMER_SECRET`: Your USPS Consumer ID
 
