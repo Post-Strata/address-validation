@@ -50,8 +50,16 @@ jobs:
           USPS_CONSUMER_KEY: mHfs1vG04FndnBjVepBvC2FbudaOt5wYChkIi0GZJy4IK90W
           USPS_CONSUMER_SECRET: ${{ secrets.USPS_CONSUMER_SECRET }}
         run: |
-          # Install rsync if needed (for local Act execution)
-          which rsync || apt-get update && apt-get install -y rsync
+          # Check if rsync is installed
+          if ! command -v rsync &> /dev/null; then
+            echo "rsync not found, attempting to install..."
+            # Try with sudo first (for local Act execution)
+            sudo apt-get update && sudo apt-get install -y rsync || true
+            # If that fails, try without sudo (for GitHub-hosted runners)
+            if ! command -v rsync &> /dev/null; then
+              apt-get update && apt-get install -y rsync || echo "Warning: Could not install rsync, deployment may fail"
+            fi
+          fi
           
           # Create a temporary directory for deployment
           TEMP_DIR=$(mktemp -d)
