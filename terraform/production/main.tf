@@ -178,17 +178,98 @@ resource "aws_instance" "app_server" {
     Name = "zip-shopify-poststrata"
   }
 
-  # The user_data script will set up Docker and create the environment file
+  # The user_data script will set up Docker, Nginx with Let's Encrypt SSL, and create the environment file
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              amazon-linux-extras install docker -y
-              systemctl start docker
-              systemctl enable docker
-              usermod -a -G docker ec2-user
+              
+              # Determine which Amazon Linux version we're running
+              if grep -q "Amazon Linux 2" /etc/os-release; then
+                # Amazon Linux 2 commands
+                yum update -y
+                
+                # Install EPEL repository (needed for Certbot)
+                amazon-linux-extras install -y epel
+                
+                # Install and configure Docker
+                amazon-linux-extras install -y docker
+                systemctl start docker
+                systemctl enable docker
+                usermod -a -G docker ec2-user
+                
+                # Install Nginx
+                amazon-linux-extras install -y nginx1
+                
+                # Install Certbot for Let's Encrypt SSL
+                yum install -y certbot python3-certbot-nginx
+                
+              else
+                # Amazon Linux 2023 commands
+                dnf update -y
+                
+                # Install and configure Docker
+                dnf install -y docker
+                systemctl start docker
+                systemctl enable docker
+                usermod -a -G docker ec2-user
+                
+                # Install Nginx and Certbot
+                dnf install -y nginx certbot python3-certbot-nginx
+              fi
+              
+              # Install Docker Compose
               curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               chmod +x /usr/local/bin/docker-compose
               mkdir -p /app
+              
+              # Create Nginx configuration for HTTP and HTTPS
+              cat > /etc/nginx/conf.d/app.conf <<NGINX
+              # HTTP server - will redirect all traffic to HTTPS
+              server {
+                  listen 80;
+                  server_name zip.shopify.poststrata.com;
+                  
+                  # Initially we set up proxying, but after Certbot runs
+                  # these will be replaced with a redirect to HTTPS
+                  location / {
+                      proxy_pass http://localhost:3000;
+                      proxy_http_version 1.1;
+                      proxy_set_header Upgrade \$http_upgrade;
+                      proxy_set_header Connection 'upgrade';
+                      proxy_set_header Host \$host;
+                      proxy_cache_bypass \$http_upgrade;
+                      proxy_set_header X-Real-IP \$remote_addr;
+                      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                      proxy_set_header X-Forwarded-Proto \$scheme;
+                  }
+              }
+              NGINX
+              
+              # Enable and start Nginx
+              systemctl enable nginx
+              systemctl start nginx
+              
+              # Create a script to obtain SSL certificate after DNS propagation
+              cat > /root/setup-ssl.sh <<'SSLSETUP'
+              #!/bin/bash
+              
+              # Wait for DNS to propagate (you might need to run this script manually if DNS takes longer)
+              sleep 180
+              
+              # Obtain SSL certificate from Let's Encrypt
+              # This will also modify the Nginx config to enable HTTPS and redirect all HTTP to HTTPS
+              certbot --nginx -d zip.shopify.poststrata.com --non-interactive --agree-tos --email developers@poststrata.com --redirect
+              
+              # Set up automatic renewal
+              echo "0 0,12 * * * root python3 -c 'import random; import time; time.sleep(random.random() * 3600)' && certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
+              SSLSETUP
+              
+              chmod +x /root/setup-ssl.sh
+              
+              # Schedule the SSL setup script to run after instance startup
+              echo "@reboot root /root/setup-ssl.sh" | tee -a /etc/crontab > /dev/null
+              
+              # Run the SSL setup script in the background
+              nohup /root/setup-ssl.sh > /root/ssl-setup.log 2>&1 &
               
               # Create env file for the application
               cat > /app/.env <<EOL

@@ -45,6 +45,38 @@ The application uses Prisma ORM with PostgreSQL in production:
    - `DATABASE_PROVIDER`: Set to "postgresql" for production
    - `DATABASE_URL`: Connection string to the PostgreSQL database
 
+### Deployment Architecture
+
+The application uses GitHub Actions for continuous deployment:
+
+1. `.github/workflows/deploy-app.yml`: Deploys the Remix application to EC2 and the Shopify extension to Shopify
+2. Terraform for infrastructure provisioning (manual process)
+3. Local testing using Act for GitHub Actions
+
+#### Local GitHub Actions Testing
+
+The repository includes scripts for testing GitHub Actions locally using Act:
+
+- `run-actions-locally.sh`: Runs GitHub Actions workflows locally with actual execution
+- `dryrun-actions.sh`: Previews GitHub Actions workflows without executing commands
+
+Usage:
+```bash
+# Full run
+./run-actions-locally.sh
+
+# Dry run
+./dryrun-actions.sh
+
+# Run specific workflow
+./run-actions-locally.sh --workflow=deploy-app.yml --job=deploy
+```
+
+Required files for local testing:
+- `.secrets`: Contains GitHub secrets (add your values, gitignored)
+- `.actrc`: Configuration for Act
+- `.env.local`: Environment variables for local testing
+
 ### Infrastructure as Code
 
 The project uses Terraform to provision and manage AWS resources:
@@ -80,6 +112,15 @@ The following environment variables are required:
   - Receives POST requests with address data
   - Returns validation results with ZIP+4 data if available
   - Includes comprehensive error logging
+
+### Server Architecture
+
+The application is served through Nginx as a reverse proxy:
+- Nginx listens on ports 80 (HTTP) and 443 (HTTPS)
+- All HTTP traffic is redirected to HTTPS for security
+- HTTPS is configured with Let's Encrypt certificates that auto-renew
+- Nginx proxies requests to the Node.js application running on port 3000
+- The setup works on both Amazon Linux 2 and Amazon Linux 2023
   
 ### USPS API Authentication
 

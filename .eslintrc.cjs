@@ -8,6 +8,14 @@ module.exports = {
     "prettier",
   ],
   globals: {
-    shopify: "readonly"
+    shopify: "readonly",
+    globalThis: "readonly",
   },
+  ignorePatterns: [
+    "node_modules/",
+    "build/",
+    "dist/",
+    "extensions/*/dist/",
+    "**/*.d.ts",
+  ],
 };

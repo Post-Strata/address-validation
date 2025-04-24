@@ -182,6 +182,8 @@ This project includes Terraform configurations for deploying the app to AWS:
 - **PostgreSQL RDS**: Managed PostgreSQL database for production
 - **VPC & Security Groups**: Configured for HTTP, HTTPS, SSH, and database access
 - **Route 53 DNS**: A record pointing to the EC2 instance
+- **Nginx with Let's Encrypt**: Automatic HTTPS configuration with SSL certificate renewal
+- **HTTP to HTTPS Redirection**: Ensures all traffic uses secure connections
 
 To deploy using Terraform:
 
@@ -210,6 +212,43 @@ After deployment, Terraform will output:
 - The application URL
 
 See detailed instructions in [terraform/production/README.md](./terraform/production/README.md)
+
+### Continuous Deployment
+
+This project uses GitHub Actions for continuous deployment:
+
+1. **Application Deployment**: The workflow in `.github/workflows/deploy-app.yml` automatically deploys:
+   - The Remix application to an EC2 instance
+   - The Shopify extension to the Shopify platform
+
+2. **Testing Locally**: You can test GitHub Actions locally using [Act](https://github.com/nektos/act):
+
+   ```bash
+   # Install Act
+   brew install act  # macOS
+   
+   # Run the workflow locally
+   ./run-actions-locally.sh
+   
+   # Or run a dry run to preview without executing
+   ./dryrun-actions.sh
+   ```
+
+3. **Required Secrets**: For deployment to work, you need to set up the following GitHub secrets:
+   - `EC2_SSH_PRIVATE_KEY`: SSH private key for accessing EC2
+   - `EC2_HOST`: EC2 instance IP address or hostname
+   - `EC2_USERNAME`: EC2 username (usually 'ec2-user')
+   - `DATABASE_URL`: Full PostgreSQL connection string
+   - `SHOPIFY_API_KEY`: Shopify API key
+   - `SHOPIFY_API_SECRET`: Shopify API secret
+   - `SHOPIFY_APP_URL`: Shopify app URL (e.g., https://zip.shopify.poststrata.com)
+   - `USPS_CONSUMER_KEY`: USPS API key
+   - `USPS_CONSUMER_SECRET`: USPS API secret
+   
+   The deployment process automatically sets up:
+   - Nginx as a reverse proxy to serve the app on ports 80/443
+   - Let's Encrypt SSL certificates with automatic renewal
+   - HTTP to HTTPS redirection for security
 
 ### Manual Hosting
 
