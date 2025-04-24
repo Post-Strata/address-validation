@@ -26,3 +26,7 @@ database.sqlite
 # Terraform files
 **/.terraform/*
 *.tfvars
+
+# Act (GitHub Actions local runner)
+.secrets
+.actrc

@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 18.20.8
           cache: 'npm'
 
       - name: Install dependencies
@@ -50,19 +50,21 @@ jobs:
           USPS_CONSUMER_KEY: mHfs1vG04FndnBjVepBvC2FbudaOt5wYChkIi0GZJy4IK90W
           USPS_CONSUMER_SECRET: ${{ secrets.USPS_CONSUMER_SECRET }}
         run: |
+          # Install rsync if needed (for local Act execution)
+          which rsync || apt-get update && apt-get install -y rsync
+          
           # Create a temporary directory for deployment
           TEMP_DIR=$(mktemp -d)
           DEPLOY_DIR="address-validation-$(date +%Y%m%d%H%M%S)"
-          
+
           # Create a deployment directory
           mkdir -p $TEMP_DIR/$DEPLOY_DIR
-          
+
           # Copy necessary files to the deployment directory (exclude unnecessary directories)
-          # Use -a (archive) without verbose output to reduce log noise and avoid overwhelming GitHub Actions
           rsync -a --quiet --exclude="node_modules" --exclude=".git" --exclude="terraform" \
             --exclude=".github" --exclude="**/node_modules" --exclude="**/.git" \
             . $TEMP_DIR/$DEPLOY_DIR/
-          
+
           # Create .env file with secrets directly in the deployment directory
           cat > $TEMP_DIR/$DEPLOY_DIR/.env <<EOL
           DATABASE_PROVIDER=postgresql
@@ -75,109 +77,120 @@ jobs:
           USPS_CONSUMER_SECRET=${USPS_CONSUMER_SECRET}
           NODE_ENV=production
           EOL
-          
+
           # Create deployment package from the temp directory
           cd $TEMP_DIR
           tar -czf deploy.tar.gz $DEPLOY_DIR
-          
+
           # Verify the tar file was created successfully
           if [ ! -f deploy.tar.gz ]; then
             echo "Error: Failed to create deployment package"
             exit 1
           fi
-          
+
           # Log the size of the tarball for debugging
           ls -lh deploy.tar.gz
-          
+
           # Copy files to server
           scp -o StrictHostKeyChecking=no $TEMP_DIR/deploy.tar.gz $EC2_USERNAME@$EC2_HOST:/tmp/
-          
+
           # Clean up temp directory
           cd -
           rm -rf $TEMP_DIR
 
-          # Deploy on the server
-          ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST << 'ENDSSH'
-            # Create deployment directory
-            mkdir -p /home/$USER
+          # Create the deployment script to run on the server
+          cat > deploy.sh << 'ENDSCRIPT'
+          #!/bin/bash
+          # Create deployment directory
+          mkdir -p /home/$USER
 
-            # Extract the deployment package (now contains a nested directory)
-            tar -xzf /tmp/deploy.tar.gz -C /home/$USER/
+          # Extract the deployment package (now contains a nested directory)
+          tar -xzf /tmp/deploy.tar.gz -C /home/$USER/
 
-            # Get the extracted directory name (latest address-validation-* directory)
-            DEPLOY_DIR=$(ls -td /home/$USER/address-validation-* | head -1)
-            echo "Deployment directory: $DEPLOY_DIR"
+          # Get the extracted directory name (latest address-validation-* directory)
+          DEPLOY_DIR=$(ls -td /home/$USER/address-validation-* | head -1)
+          echo "Deployment directory: $DEPLOY_DIR"
 
-            # Check if Node.js is installed
-            if ! command -v node &> /dev/null; then
-              echo "Node.js not found, installing..."
-              # Install Node.js using NVM
-              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-              source ~/.nvm/nvm.sh
-              nvm install 18
-              nvm use 18
-              
-              # Verify installation
-              node --version
-              npm --version
-            fi
-            
-            # Move to the deployment directory
-            cd $DEPLOY_DIR
-            
-            # Make sure we're using the right Node.js version
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm use 18 || nvm install 18
-            
-            # Install dependencies and build
-            npm ci
-            npm run build
-            
-            # Run database migrations
-            npm run setup
+          # Check if Node.js is installed
+          if ! command -v node &> /dev/null; then
+            echo "Node.js not found, installing..."
+            # Install Node.js using NVM
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+            source ~/.nvm/nvm.sh
+            nvm install 18.20.8
+            nvm use 18.20.8
 
-            # Create or update the symlink to the current deployment
-            ln -sfn $DEPLOY_DIR /home/$USER/current
+            # Verify installation
+            node --version
+            npm --version
+          fi
 
-            # Set up systemd service if it doesn't exist
-            if [ ! -f /etc/systemd/system/address-validation.service ]; then
-              # Create service file with proper paths to Node.js from NVM
-              cat > /tmp/address-validation.service << 'EOLSERVICE'
-[Unit]
-Description=Address Validation Shopify App
-After=network.target
+          # Move to the deployment directory
+          cd $DEPLOY_DIR
 
-[Service]
-Type=simple
-User=${USER}
-WorkingDirectory=/home/${USER}/current
-ExecStart=/home/${USER}/.nvm/versions/node/v18.18.0/bin/npm run start
-Restart=always
-Environment=NODE_ENV=production
-Environment=PATH=/home/${USER}/.nvm/versions/node/v18.18.0/bin:/usr/local/bin:/usr/bin:/bin
+          # Make sure we're using the right Node.js version
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm use 18.20.8 || nvm install 18.20.8
 
-[Install]
-WantedBy=multi-user.target
-EOLSERVICE
-              
-              # Move the file to systemd directory
-              sudo mv /tmp/address-validation.service /etc/systemd/system/
+          # Install dependencies and build
+          npm ci
+          npm run build
 
-              sudo systemctl daemon-reload
-              sudo systemctl enable address-validation
-            fi
+          # Run database migrations
+          npm run setup
 
-            # Restart the service
-            sudo systemctl restart address-validation
+          # Create or update the symlink to the current deployment
+          ln -sfn $DEPLOY_DIR /home/$USER/current
 
-            # Clean up
-            rm /tmp/deploy.tar.gz
+          # Create service unit file content
+          SERVICE_CONTENT="[Unit]
+          Description=Address Validation Shopify App
+          After=network.target
 
-            # Keep only the 3 most recent deployments
-            cd /home/$USER
-            ls -dt /home/$USER/address-validation-* | tail -n +4 | xargs -r rm -rf
-          ENDSSH
+          [Service]
+          Type=simple
+          User=${USER}
+          WorkingDirectory=/home/${USER}/current
+          ExecStart=/home/${USER}/.nvm/versions/node/v18.20.8/bin/npm run start
+          Restart=always
+          Environment=NODE_ENV=production
+          Environment=PATH=/home/${USER}/.nvm/versions/node/v18.20.8/bin:/usr/local/bin:/usr/bin:/bin
+
+          [Install]
+          WantedBy=multi-user.target"
+
+          # Always recreate the systemd service file to ensure it uses the correct Node version
+          if [ -f /etc/systemd/system/address-validation.service ]; then
+            echo "Removing existing service file to ensure latest version is used"
+            sudo rm /etc/systemd/system/address-validation.service
+          fi
+          
+          # Write the service file content to a temporary file
+          echo "$SERVICE_CONTENT" > /tmp/address-validation.service
+
+          # Move the file to systemd directory
+          sudo mv /tmp/address-validation.service /etc/systemd/system/
+
+          # Reload and enable the service
+          sudo systemctl daemon-reload
+          sudo systemctl enable address-validation
+
+          # Restart the service
+          sudo systemctl restart address-validation
+
+          # Clean up
+          rm /tmp/deploy.tar.gz
+
+          # Keep only the 3 most recent deployments
+          cd /home/$USER
+          ls -dt /home/$USER/address-validation-* | tail -n +4 | xargs -r rm -rf
+          ENDSCRIPT
+
+          # Copy and run the deployment script
+          scp -o StrictHostKeyChecking=no deploy.sh $EC2_USERNAME@$EC2_HOST:/tmp/
+          ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "chmod +x /tmp/deploy.sh && /tmp/deploy.sh"
+          rm deploy.sh
 
       - name: Deploy Shopify Extension
         env:
@@ -188,6 +201,12 @@ EOLSERVICE
           SHOPIFY_FLAG_PATH: "--path=extensions/address-validation"
         run: |
           echo "Deploying Shopify Extensions..."
+          
+          # Check if shopify CLI is installed, install if not (for local Act execution)
+          if ! command -v shopify &> /dev/null; then
+            echo "Shopify CLI not found, installing..."
+            npm install -g @shopify/cli @shopify/app
+          fi
           
           # Deploy extensions with non-interactive mode and with specific flags
           SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --no-release
