@@ -54,13 +54,19 @@ jobs:
           if ! command -v rsync &> /dev/null; then
             echo "rsync not found, attempting to install..."
             # Try with sudo first (for local Act execution)
-            sudo apt-get update && sudo apt-get install -y rsync || true
+            if ! sudo apt-get update && sudo apt-get install -y rsync; then
+              echo "Error: Failed to install rsync with sudo. Exiting..."
+              exit 1
+            fi
             # If that fails, try without sudo (for GitHub-hosted runners)
             if ! command -v rsync &> /dev/null; then
-              apt-get update && apt-get install -y rsync || echo "Warning: Could not install rsync, deployment may fail"
+              if ! apt-get update && apt-get install -y rsync; then
+                echo "Error: Failed to install rsync without sudo. Exiting..."
+                exit 1
+              fi
             fi
           fi
-          
+
           # Create a temporary directory for deployment
           TEMP_DIR=$(mktemp -d)
           DEPLOY_DIR="address-validation-$(date +%Y%m%d%H%M%S)"
@@ -173,7 +179,7 @@ jobs:
             echo "Removing existing service file to ensure latest version is used"
             sudo rm /etc/systemd/system/address-validation.service
           fi
-          
+
           # Write the service file content to a temporary file
           echo "$SERVICE_CONTENT" > /tmp/address-validation.service
 
@@ -209,12 +215,12 @@ jobs:
           SHOPIFY_FLAG_PATH: "--path=extensions/address-validation"
         run: |
           echo "Deploying Shopify Extensions..."
-          
+
           # Check if shopify CLI is installed, install if not (for local Act execution)
           if ! command -v shopify &> /dev/null; then
             echo "Shopify CLI not found, installing..."
             npm install -g @shopify/cli @shopify/app
           fi
-          
+
           # Deploy extensions with non-interactive mode and with specific flags
           SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --no-release
