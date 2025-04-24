@@ -54,13 +54,13 @@ jobs:
           if ! command -v rsync &> /dev/null; then
             echo "rsync not found, attempting to install..."
             # Try with sudo first (for local Act execution)
-            if ! sudo apt-get update && sudo apt-get install -y rsync; then
+            if ! (sudo apt-get update && sudo apt-get install -y rsync); then
               echo "Error: Failed to install rsync with sudo. Exiting..."
               exit 1
             fi
             # If that fails, try without sudo (for GitHub-hosted runners)
             if ! command -v rsync &> /dev/null; then
-              if ! apt-get update && apt-get install -y rsync; then
+              if ! (apt-get update && apt-get install -y rsync); then
                 echo "Error: Failed to install rsync without sudo. Exiting..."
                 exit 1
               fi
