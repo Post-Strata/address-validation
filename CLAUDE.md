@@ -82,11 +82,15 @@ Required files for local testing:
 The project uses Terraform to provision and manage AWS resources:
 
 - `terraform/production/`: Contains Terraform configurations for production deployment
-  - `main.tf`: Defines AWS resources (EC2, security groups, Route 53)
+  - `main.tf`: Defines AWS resources (EC2, Elastic IP, security groups, Route 53)
   - `variables.tf`: Defines input variables for the Terraform configuration
   - `backend.tf`: Configures remote state management
   - `outputs.tf`: Defines outputs from the Terraform configuration
   - `terraform.tfvars`: Contains values for the variables (gitignored for sensitive data)
+
+The infrastructure includes:
+- Elastic IP association to ensure the EC2 instance has a static IP address
+- DNS records that point to the Elastic IP for consistent addressing
 
 ### Environment Variables
 

@@ -165,6 +165,15 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
+# Elastic IP for EC2 instance
+resource "aws_eip" "app_eip" {
+  domain = "vpc"
+  
+  tags = {
+    Name = "zip-shopify-eip"
+  }
+}
+
 # EC2 instance
 resource "aws_instance" "app_server" {
   ami                         = var.ami_id
@@ -281,11 +290,17 @@ resource "aws_instance" "app_server" {
   depends_on = [aws_db_instance.app_db]
 }
 
+# Associate Elastic IP with EC2 instance
+resource "aws_eip_association" "app_eip_assoc" {
+  instance_id   = aws_instance.app_server.id
+  allocation_id = aws_eip.app_eip.id
+}
+
 # DNS record in Route 53
 resource "aws_route53_record" "app_dns" {
   zone_id = var.zone_id
   name    = "zip.shopify.poststrata.com"
   type    = "A"
   ttl     = 300
-  records = [aws_instance.app_server.public_ip]
+  records = [aws_eip.app_eip.public_ip]
 }
