@@ -40,7 +40,7 @@ jobs:
 
       - name: Deploy to EC2
         env:
-          EC2_HOST: "18.208.152.222"
+          EC2_HOST: "44.203.157.95"
           EC2_USERNAME: "ec2-user"
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
