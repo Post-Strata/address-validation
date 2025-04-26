@@ -245,7 +245,6 @@ jobs:
           SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
           SHOPIFY_API_SECRET: ${{ secrets.SHOPIFY_API_SECRET }}
           SHOPIFY_APP_URL: ${{ secrets.SHOPIFY_APP_URL }}
-          SHOPIFY_FLAG_PATH: "--path=extensions/address-validation"
         run: |
           echo "Deploying Shopify Extensions..."
 
@@ -256,4 +255,5 @@ jobs:
           fi
 
           # Deploy extensions with non-interactive mode and with specific flags
-          SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --no-release
+          echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --no-release"
+          SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --path=extensions/address-validation --no-release
