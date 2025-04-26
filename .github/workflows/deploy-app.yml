@@ -106,11 +106,23 @@ jobs:
 
           # Copy files to server with improved settings and retry logic
           echo "Transferring deployment package to server..."
+          
+          # Install netcat if it's not available (for Act compatibility)
+          NC_AVAILABLE=true
+          if ! command -v nc &> /dev/null; then
+            echo "netcat not found, attempting to install..."
+            apt-get update && apt-get install -y netcat-openbsd || {
+              echo "Warning: Could not install netcat, skipping connectivity check"
+              # When netcat isn't available, we'll just attempt the connection anyway
+              NC_AVAILABLE=false
+            }
+          fi
+          
           for i in {1..5}; do
             echo "Attempt $i: Copying deployment package to server..."
             # First check if the server is reachable
             echo "Checking server reachability..."
-            if nc -z -w 10 $EC2_HOST 22; then
+            if [ "$NC_AVAILABLE" = false ] || nc -z -w 10 $EC2_HOST 22; then
               echo "Server is reachable on port 22, attempting file transfer..."
               if scp -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -C deploy.tar.gz $EC2_USERNAME@$EC2_HOST:/tmp/; then
                 echo "Successfully copied deployment package to server."
@@ -244,7 +256,7 @@ jobs:
             echo "Attempt $i: Copying deployment script to server..."
             # First check if the server is reachable
             echo "Checking server reachability..."
-            if nc -z -w 10 $EC2_HOST 22; then
+            if [ "$NC_AVAILABLE" = false ] || nc -z -w 10 $EC2_HOST 22; then
               echo "Server is reachable on port 22, attempting file transfer..."
               if scp -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -C deploy.sh $EC2_USERNAME@$EC2_HOST:/tmp/; then
                 echo "Successfully copied deployment script to server."
