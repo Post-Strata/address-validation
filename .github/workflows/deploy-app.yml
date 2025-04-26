@@ -81,7 +81,6 @@ jobs:
 
           # Create .env file with secrets directly in the deployment directory
           cat > $TEMP_DIR/$DEPLOY_DIR/.env <<EOL
-          DATABASE_PROVIDER=postgresql
           DATABASE_URL=${DATABASE_URL}
           SHOPIFY_API_KEY=${SHOPIFY_API_KEY}
           SHOPIFY_API_SECRET=${SHOPIFY_API_SECRET}

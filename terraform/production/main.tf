@@ -282,7 +282,6 @@ resource "aws_instance" "app_server" {
               
               # Create env file for the application
               cat > /app/.env <<EOL
-              DATABASE_PROVIDER=postgresql
               DATABASE_URL=postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.app_db.endpoint}/${var.db_name}
               EOL
               EOF
