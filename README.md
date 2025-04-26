@@ -179,9 +179,10 @@ pnpm run build
 This project includes Terraform configurations for deploying the app to AWS:
 
 - **EC2 Instance**: Amazon Linux 2023 with Docker and Docker Compose pre-installed
+- **Elastic IP**: Static IP address that doesn't change when the EC2 instance is restarted
 - **PostgreSQL RDS**: Managed PostgreSQL database for production
 - **VPC & Security Groups**: Configured for HTTP, HTTPS, SSH, and database access
-- **Route 53 DNS**: A record pointing to the EC2 instance
+- **Route 53 DNS**: A record pointing to the Elastic IP for reliable DNS resolution
 - **Nginx with Let's Encrypt**: Automatic HTTPS configuration with SSL certificate renewal
 - **HTTP to HTTPS Redirection**: Ensures all traffic uses secure connections
 
@@ -236,7 +237,7 @@ This project uses GitHub Actions for continuous deployment:
 
 3. **Required Secrets**: For deployment to work, you need to set up the following GitHub secrets:
    - `EC2_SSH_PRIVATE_KEY`: SSH private key for accessing EC2
-   - `EC2_HOST`: EC2 instance IP address or hostname
+   - `EC2_HOST`: Elastic IP address of the EC2 instance (doesn't change on instance restart)
    - `EC2_USERNAME`: EC2 username (usually 'ec2-user')
    - `DATABASE_URL`: Full PostgreSQL connection string
    - `SHOPIFY_API_KEY`: Shopify API key
