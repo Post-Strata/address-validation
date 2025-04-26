@@ -42,7 +42,6 @@ The application uses Prisma ORM with PostgreSQL in production:
 1. Uses SQLite for local development and PostgreSQL for production
 2. Database schema is defined in `prisma/schema.prisma`
 3. Database connection is configured via environment variables:
-   - `DATABASE_PROVIDER`: Set to "postgresql" for production
    - `DATABASE_URL`: Connection string to the PostgreSQL database
 
 ### Deployment Architecture
@@ -97,7 +96,6 @@ The infrastructure includes:
 The following environment variables are required:
 
 #### Database Connection
-- `DATABASE_PROVIDER`: Database provider (e.g., "postgresql")
 - `DATABASE_URL`: Database connection string
 
 #### Shopify Integration
