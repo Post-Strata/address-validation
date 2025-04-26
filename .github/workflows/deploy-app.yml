@@ -105,8 +105,23 @@ jobs:
           # Log the size of the tarball for debugging
           ls -lh deploy.tar.gz
 
-          # Copy files to server
-          scp -o StrictHostKeyChecking=no $TEMP_DIR/deploy.tar.gz $EC2_USERNAME@$EC2_HOST:/tmp/
+          # Copy files to server with improved settings and retry logic
+          echo "Transferring deployment package to server..."
+          for i in {1..3}; do
+            echo "Attempt $i: Copying deployment package to server..."
+            if scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -C deploy.tar.gz $EC2_USERNAME@$EC2_HOST:/tmp/; then
+              echo "Successfully copied deployment package to server."
+              break
+            else
+              echo "Failed to copy deployment package to server, attempt $i."
+              if [ $i -eq 3 ]; then
+                echo "Failed all attempts to copy deployment package."
+                exit 1
+              fi
+              echo "Waiting 10 seconds before retrying..."
+              sleep 10
+            fi
+          done
 
           # Clean up temp directory
           cd -
@@ -201,9 +216,27 @@ jobs:
           ls -dt /home/$USER/address-validation-* | tail -n +4 | xargs -r rm -rf
           ENDSCRIPT
 
-          # Copy and run the deployment script
-          scp -o StrictHostKeyChecking=no deploy.sh $EC2_USERNAME@$EC2_HOST:/tmp/
-          ssh -o StrictHostKeyChecking=no $EC2_USERNAME@$EC2_HOST "chmod +x /tmp/deploy.sh && /tmp/deploy.sh"
+          # Copy and run the deployment script with retry logic
+          echo "Transferring deployment script to server..."
+          for i in {1..3}; do
+            echo "Attempt $i: Copying deployment script to server..."
+            if scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 deploy.sh $EC2_USERNAME@$EC2_HOST:/tmp/; then
+              echo "Successfully copied deployment script to server."
+              break
+            else
+              echo "Failed to copy deployment script to server, attempt $i."
+              if [ $i -eq 3 ]; then
+                echo "Failed all attempts to copy deployment script."
+                exit 1
+              fi
+              echo "Waiting 5 seconds before retrying..."
+              sleep 5
+            fi
+          done
+          
+          # Execute deployment script with improved SSH settings
+          echo "Running deployment script on server..."
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 $EC2_USERNAME@$EC2_HOST "chmod +x /tmp/deploy.sh && /tmp/deploy.sh"
           rm deploy.sh
 
       - name: Deploy Shopify Extension
