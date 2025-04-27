@@ -70,6 +70,11 @@ export default defineConfig({
   ],
   build: {
     assetsInlineLimit: 0,
+    rollupOptions: {
+      external: [
+        "@shopify/shopify-app-remix/adapters/node"
+      ]
+    }
   },
   optimizeDeps: {
     include: ["@shopify/app-bridge-react", "@shopify/polaris"],
