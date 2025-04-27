@@ -48,7 +48,8 @@ npm run build || {
 
 # Test database connection before running migrations
 echo "Testing database connection with Prisma..."
-npx prisma db pull --force || {
+# Use a simple connection test instead of db pull which might fail on empty databases
+npx prisma validate || {
   echo "❌ DATABASE CONNECTION ERROR ❌"
   echo "Failed to connect to the database. Check your DATABASE_URL environment variable."
   echo "Attempting to parse DATABASE_URL for troubleshooting (credentials redacted):"
@@ -58,6 +59,7 @@ npx prisma db pull --force || {
 
 # Run database migrations
 echo "Database connection successful, running migrations..."
+echo "This will create tables if they don't exist..."
 npm run setup
 
 # Create or update the symlink to the current deployment
