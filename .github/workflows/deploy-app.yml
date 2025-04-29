@@ -1,3 +1,4 @@
+# https://shopify.dev/docs/apps/launch/deployment/deploy-in-ci-cd-pipeline
 name: Deploy Application
 
 on:
@@ -199,9 +200,10 @@ jobs:
           done
 
       - name: Deploy Shopify Extension
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        # if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
-          SHOPIFY_CLI_TTY: "0"
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
           SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
           SHOPIFY_API_SECRET: ${{ secrets.SHOPIFY_API_SECRET }}
           SHOPIFY_APP_URL: ${{ secrets.SHOPIFY_APP_URL }}
@@ -215,5 +217,5 @@ jobs:
           fi
 
           # Deploy extensions with non-interactive mode and with specific flags
-          echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --force"
-          SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --path=extensions/address-validation --force
+          echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --f --source-control-url "$COMMIT_URL""
+          npm run deploy -- --path=extensions/address-validation --f --source-control-url "$COMMIT_URL"
