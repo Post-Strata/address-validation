@@ -37,6 +37,27 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
+      - name: Deploy Shopify Extension
+        env:
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+          SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
+          SHOPIFY_API_SECRET: ${{ secrets.SHOPIFY_API_SECRET }}
+          SHOPIFY_APP_URL: ${{ secrets.SHOPIFY_APP_URL }}
+        run: |
+          echo "Deploying Shopify Extensions..."
+
+          # Check if shopify CLI is installed, install if not (for local Act execution)
+          if ! command -v shopify &> /dev/null; then
+            echo "Shopify CLI not found, installing..."
+            npm install -g @shopify/cli @shopify/app
+          fi
+
+          # Deploy extensions with non-interactive mode and with specific flags
+          echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --f --source-control-url "$COMMIT_URL""
+          npm run deploy -- --path=extensions/address-validation --f --source-control-url "$COMMIT_URL"
+
+
       - name: Deploy to EC2
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
