@@ -55,7 +55,7 @@ jobs:
 
           # Deploy extensions with non-interactive mode and with specific flags
           echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --f --source-control-url "$COMMIT_URL""
-          npm run deploy -- --path=extensions/address-validation -f -source-control-url "$COMMIT_URL"
+          npm run deploy -- --path=extensions/address-validation -f --source-control-url "$COMMIT_URL"
 
 
       - name: Deploy to EC2
