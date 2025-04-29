@@ -40,6 +40,7 @@ jobs:
           ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
       - name: Deploy to EC2
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USERNAME: "ec2-user"
@@ -198,6 +199,7 @@ jobs:
           done
 
       - name: Deploy Shopify Extension
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         env:
           SHOPIFY_CLI_TTY: "0"
           SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
