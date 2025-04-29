@@ -212,5 +212,5 @@ jobs:
           fi
 
           # Deploy extensions with non-interactive mode and with specific flags
-          echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --no-release --force"
-          SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --path=extensions/address-validation --no-release --force
+          echo "Running deployment command: npm run deploy -- --path=extensions/address-validation --force"
+          SHOPIFY_CLI_NO_ANALYTICS=1 SHOPIFY_CLI_TTY=0 npm run deploy -- --path=extensions/address-validation --force
