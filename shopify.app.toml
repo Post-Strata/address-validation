@@ -7,23 +7,23 @@ application_url = "https://zip.shopify.poststrata.com"
 embedded = true
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true
+include_config_on_deploy = true
 
 [webhooks]
 api_version = "2025-04"
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
-
-  [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,read_shipping"
+scopes = "read_shipping,write_products"
 
 [auth]
 redirect_urls = [
@@ -32,10 +32,10 @@ redirect_urls = [
   "https://zip.shopify.poststrata.com/api/auth/callback"
 ]
 
-[pos]
-embedded = false
-
 [app_proxy]
 url = "https://zip.shopify.poststrata.com"
 subpath = "address-validation"
 prefix = "apps"
+
+[pos]
+embedded = false

@@ -146,7 +146,7 @@ function Extension() {
       console.log("⚠️ ERROR DURING VALIDATION - ALLOWING CHECKOUT ANYWAY");
       setAddressValid(true);
     }
-  },[shippingAddress, sessionToken, api_host, USPS_CONSUMER_KEY, USPS_CONSUMER_SECRET, applyFullZip]);
+  },[shippingAddress, sessionToken, api_host, applyFullZip]);
 
   // Set up intercept
   useBuyerJourneyIntercept(({ canBlockProgress }) => {
