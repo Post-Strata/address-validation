@@ -6,8 +6,8 @@
 api_version = "2025-01"
 
 [[extensions]]
-name = "address-validation"
-handle = "address-validation"
+name = "zip-code-blocker"
+handle = "zip-code-blocker"
 type = "ui_extension"
 
 
