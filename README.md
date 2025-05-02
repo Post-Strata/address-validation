@@ -16,6 +16,65 @@ Rather than cloning this repo, you can use your preferred package manager and th
 
 Visit the [`shopify.dev` documentation](https://shopify.dev/docs/api/shopify-app-remix) for more details on the Remix app package.
 
+## Quick Scripts
+
+### Deploy Script
+
+```bash
+#!/bin/bash
+
+# Deploy script for Address Validation App
+echo "Deploying Address Validation App..."
+
+# 1. Build the app
+npm run build
+
+# 2. Deploy the Shopify app
+npm run deploy
+
+# 3. Deploy the Shopify Extension
+cd extensions/address-validation && npm run deploy && cd ../..
+
+# 4. Push to production server (if configured)
+if [ -f "scripts/deploy.sh" ]; then
+  bash scripts/deploy.sh
+else
+  echo "Manual deployment: Use GitHub Actions or run 'scripts/deploy.sh' if available"
+fi
+
+echo "Deployment complete! 🚀"
+```
+
+### Run Script
+
+```bash
+#!/bin/bash
+
+# Run script for Address Validation App
+echo "Starting Address Validation App..."
+
+# 1. Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+  echo "Installing dependencies..."
+  npm install
+fi
+
+# 2. Setup database if needed
+if [ ! -f ".env" ]; then
+  echo "Setting up environment..."
+  cp development.env.example .env
+  echo "Please update your .env file with correct values"
+fi
+
+# 3. Generate Prisma client and run migrations
+npm run setup
+
+# 4. Start development server
+npm run dev
+
+echo "App is running! 🚀"
+```
+
 ## Quick start
 
 ### Prerequisites
