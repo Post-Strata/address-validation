@@ -113,6 +113,10 @@ function Extension() {
 
       const data = await response.json();
 
+      if (data.error && data.error.includes("configured")) {
+        throw new Error(data.error);
+      }
+
       if (data.error) {
         console.error("❌ ADDRESS VALIDATION ERROR:", data.error);
         setErrorMessage(data.error);
@@ -142,7 +146,7 @@ function Extension() {
       console.log("⚠️ ERROR DURING VALIDATION - ALLOWING CHECKOUT ANYWAY");
       setAddressValid(true);
     }
-  },[shippingAddress, sessionToken, api_host, applyFullZip]);
+  },[shippingAddress, sessionToken, api_host, USPS_CONSUMER_KEY, USPS_CONSUMER_SECRET, applyFullZip]);
 
   // Set up intercept
   useBuyerJourneyIntercept(({ canBlockProgress }) => {

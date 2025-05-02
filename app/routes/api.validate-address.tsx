@@ -54,6 +54,17 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
+    const uspsConsumerKey = process.env.USPS_CONSUMER_KEY;
+    const uspsConsumerSecret = process.env.USPS_CONSUMER_SECRET;
+
+    if (!uspsConsumerKey || !uspsConsumerSecret) {
+      console.error("USPS API credentials not configured");
+      return new Response(
+        JSON.stringify({ error: "USPS API not configured" }),
+        { status: 400, headers: { ...corsHeaders } }
+      );
+    }
+
     // Validate required fields
     const requiredFields = ["address1", "city", "province", "zip", "country"];
     for (const field of requiredFields) {
@@ -80,7 +91,7 @@ export async function action({ request }: ActionFunctionArgs) {
       city: address.city,
       state: address.province,
       zipCode: address.zip.substring(0, 5),
-    });
+    }, uspsConsumerKey, uspsConsumerSecret);
     console.log("USPS API result:", result);
 
     return new Response(

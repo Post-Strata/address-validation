@@ -173,10 +173,18 @@ export async function getUSPSToken(clientId: string, clientSecret: string): Prom
 /**
  * Fetches ZIP+4 information from the USPS Address API 3.0
  * @param address Address information to validate
+ * @param consumerKey Optional USPS API key (falls back to env variable)
+ * @param consumerSecret Optional USPS API secret (falls back to env variable)
  * @returns Validation result with ZIP+4 if available
  */
-export async function fetchUSPSZip4(address: AddressInput): Promise<StandardizedAddressResponse> {
-  const { USPS_CONSUMER_KEY, USPS_CONSUMER_SECRET } = process.env;
+export async function fetchUSPSZip4(
+  address: AddressInput,
+  consumerKey?: string,
+  consumerSecret?: string
+): Promise<StandardizedAddressResponse> {
+  const USPS_CONSUMER_KEY = consumerKey;
+  const USPS_CONSUMER_SECRET = consumerSecret;
+
   console.log('USPS credentials available:', !!USPS_CONSUMER_KEY, !!USPS_CONSUMER_SECRET);
 
   if (!USPS_CONSUMER_KEY || !USPS_CONSUMER_SECRET) {
